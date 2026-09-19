@@ -132,8 +132,9 @@ export function riskyDeals(board, map, { now = new Date() } = {}) {
     if (label && !OPEN.has(label)) continue;
     const reasons = [];
     if (map.fields.close_date) { const date = parseDate(valueOf(item, map.fields.close_date)); if (!date) reasons.push('missing_or_invalid_close_date'); else if (date < now) reasons.push('past_close_date'); }
-    if (map.fields.amount && parseAmount(valueOf(item, map.fields.amount)) === null) reasons.push('missing_or_invalid_amount');
-    if (reasons.length) records.push({ id: item.id, name: item.name, reasons });
+    const amount = map.fields.amount ? parseAmount(valueOf(item, map.fields.amount)) : null;
+    if (map.fields.amount && amount === null) { reasons.push('missing_or_invalid_amount'); result.data_quality.missing_amount++; }
+    if (reasons.length) records.push({ id: item.id, name: item.name, reasons, amount });
   }
   return { ...result, value: records, included_records: records.length, provenance: { source_board: board.name, schema: map.fields } };
 }

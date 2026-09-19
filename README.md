@@ -1,65 +1,241 @@
-# Skylark Drones monday.com BI Agent
+# Skylark Intelligence
 
-An intentionally small, defensible BI prototype: monday.com is the only runtime business-data source; the browser only talks to this backend; deterministic code calculates numbers; and every result carries status, data-quality, source, schema, and retrieval metadata.
+![Skylark Intelligence - Business Intelligence for a Higher Tomorrow](image.png)
 
-## Phase 0 inspection (19 Sep 2026)
+An interactive founder-facing BI assistant for live monday.com sales and work-order data.
 
-### A. Data findings
-No Deals or Work Orders dataset was present in the supplied workspace or attachments. The workspace started empty. Therefore no columns, null rates, examples, duplicates, or data types could be honestly reported.
+The app combines deterministic analytics with an optional Amazon Bedrock commentary layer. Deterministic code owns every filter, aggregation, date rule, currency value, risk count, and chart value. Bedrock can add qualitative interpretation, but it cannot invent, recalculate, or replace the numbers.
 
-### B. Canonical data model
-The runtime model is discovered from actual monday board columns. The adapter preserves `id`, `name`, `created_at`, and all raw column values. The mapping layer can map verified columns to `amount`, `sector`, `stage`, `status`, `close_date`, `owner`, `completion_date`, `start_date`, `work_order_value`, and `external_id`. A field is mapped only when exactly one matching title exists.
+## Quick Start
 
-### C. Data-quality findings
-No source records were available to measure. The implementation treats empty values as null, accepts unambiguous values only, rejects ambiguous numeric slash dates, preserves raw values, and exposes excluded records/counts. It does not turn missing amounts into zero.
+Run these commands in PowerShell:
 
-### D. Supported metrics
-After a board is configured and its schema supports them: open pipeline, open pipeline by sector, and risky deals (past/missing close date and missing amount). They use recognized, explicit open labels only.
+```powershell
+cd "C:\Users\prajw\OneDrive\Documents\Project\Business-Intelligence-Agent"
+npm install
+Copy-Item .env.example .env
+notepad .env
+npm test
+npm start
+```
 
-### E. Unsupported / insufficient metrics
-Weighted pipeline, won revenue, expected revenue, win rate, work-order metrics, leadership update, and cross-board conversion are not implemented because actual board fields and business definitions were not available to validate them. The API reports `UNSUPPORTED` or `INSUFFICIENT_DATA`; it never estimates.
+Add your monday.com token and board IDs to `.env`, then open [http://localhost:3000](http://localhost:3000). Keep the terminal running while using the dashboard. Stop the server with `Ctrl+C`.
 
-### F. monday.com integration path
-The selected path is the monday GraphQL API, behind `MondayDataAdapter`. It is deterministic, read-only, supports cursor pagination, has a server-side 15-second timeout, and returns clear errors for authentication/rate-limit/source failures. No monday MCP connector was available in this session. The initial request uses a board-scoped `items_page`; continuation uses `next_items_page` until its cursor is absent.
+For development with automatic server restarts:
 
-### G. Architecture
-`Browser → Node HTTP backend → query router → deterministic analytics → normalization/schema mapping → MondayDataAdapter → monday.com GraphQL`.
+```powershell
+npm run dev
+```
 
-### H. Key risks
-The actual monday board names/IDs/schema, token authorization, stage vocabulary, currency, and date convention are unverified. The default GraphQL API version must be compatible with the connected monday account. Caching is a 30-second in-memory TTL, exposed as `cached` rather than described as live.
+## What It Feels Like
 
-### I. Implementation plan
-1. Configure two board IDs and a read-only token. 2. Inspect `/api/schema` and review mappings/ambiguities. 3. Align status vocabulary and metric contracts with leadership. 4. Add only verified metrics. 5. deploy with server-side secrets and run golden queries against live boards.
+Open `http://localhost:3000` and ask a question in plain language:
 
-### J. Six-hour execution plan
-Hour 1: credential setup, source discovery. Hour 2: approve schema and status vocabulary. Hours 3–4: implement verified revenue/operations metrics and tests. Hour 5: deployment and retries/rate-limit validation. Hour 6: golden-query, clean-session, and security audit.
+- `How is our pipeline looking?`
+- `Which deals are risky?`
+- `Show pipeline by sector`
+- `What are the largest deals?`
+- `Which work orders are delayed?`
+- `How are operations doing?`
 
-### K. Required credentials / human actions
-Provide a monday API token that can **read** the intended boards, their IDs, and confirmation of the desired API version. A deployment account/project plus server-side secret configuration are also required for a public URL. No valid credential or deployment target was provided, so this repository is not deployed and cannot be truthfully called connected/live.
+The interface is designed around one executive answer per question:
 
-## Local setup
+1. **Direct answer**: a short interpretation first.
+2. **Key numbers**: the relevant totals and record counts.
+3. **What stands out**: evidence-based stage, sector, or risk observations.
+4. **Risks and caveats**: shown only when material.
+5. **Detailed report**: an expandable view with deterministic visualizations.
 
-Requires Node 18+ (tested with Node 24.20.0). Copy `.env.example` to `.env`, set values in your environment, then run:
+For pipeline questions, the detailed report includes compact bar charts for the largest deal stages and sectors. The report can also include optional Bedrock commentary below the deterministic evidence.
+
+## Current Pipeline Example
+
+A live pipeline overview is synthesized from the relevant analytics only:
+
+```text
+Your current open pipeline is ₹68.82 Cr across 47 deals, led by Tender.
+56 deals need attention. You have ₹9.50 Cr in won revenue for context.
+```
+
+Internal identifiers such as `open_pipeline`, `risky_deals`, and `pipeline_by_sector` stay in the backend evidence and are not shown as the user-facing answer.
+
+## Architecture
+
+```text
+User question
+  -> intent classification
+  -> relevant analytics selection
+  -> live monday.com retrieval
+  -> deterministic calculations
+  -> structured evidence
+  -> optional Bedrock qualitative commentary
+  -> one executive response + optional visual report
+```
+
+Runtime components:
+
+- `public/index.html`: browser UI, question composer, response hierarchy, and report visualizations.
+- `src/server.js`: same-origin HTTP server and JSON API.
+- `src/query.js`: intent routing, analytics orchestration, response synthesis, and evidence collection.
+- `src/analytics.js`: deterministic metrics and data-quality rules.
+- `src/normalization.js`: amount, date, status, and label normalization.
+- `src/schema.js`: mapping from live monday.com column titles to canonical fields.
+- `src/monday.js`: read-only monday.com GraphQL adapter with cursor pagination and timeouts.
+- `src/bedrock.js`: optional server-only Bedrock commentary request.
+
+## Data Sources
+
+monday.com is the only runtime business-data source. The application currently supports two configured boards:
+
+- **Deals**: open pipeline, pipeline by stage, pipeline by sector, won revenue, top deals, and risky deals.
+- **Work Orders**: active, completed, and delayed work-order views.
+
+The schema is discovered from the live board columns. A field is used only when its mapping is unambiguous. Missing or invalid values remain visible as exclusions and caveats; they are never silently converted to zero.
+
+## Setup
+
+Requirements:
+
+- Node.js 18 or later
+- npm
+- A monday.com read-capable API token
+- IDs for the Deals and Work Orders boards
+- Optional Bedrock bearer API key and model access
+
+Install and configure:
+
+```powershell
+cd "C:\Users\prajw\OneDrive\Documents\Project\Business-Intelligence-Agent"
+npm install
+Copy-Item .env.example .env
+notepad .env
+```
+
+Minimum `.env` configuration:
+
+```env
+MONDAY_API_TOKEN=your_monday_read_token
+MONDAY_DEALS_BOARD_ID=your_deals_board_id
+MONDAY_WORK_ORDERS_BOARD_ID=your_work_orders_board_id
+MONDAY_API_VERSION=2025-10
+PORT=3000
+CACHE_TTL_MS=30000
+```
+
+Start the application:
 
 ```powershell
 npm test
 npm start
 ```
 
-Open `http://localhost:3000`. Send `GET /api/schema` after configuration to inspect the runtime schema. Send `POST /api/query` with `{"question":"How's our Energy pipeline this quarter?"}` for a structured result.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Metric contract: open pipeline
+## Optional Bedrock Enhancement
 
-- Definition: sum of `amount` for a record with a recognized open stage/status (`open`, `new`, `qualified`, `proposal`, `negotiation`, `in progress`, or `active`).
-- Required: an unambiguous amount column and at least one unambiguous stage/status column.
-- Optional filters: exact normalized sector; current calendar quarter based on an unambiguous close date.
-- Exclusions: non-open stages, mismatched filters, missing/invalid amounts, and missing/invalid dates when quarter-filtered.
-- Output: status, value, included/excluded counts, filters, definition, data quality, source board/schema, timestamp, and cache state.
+Bedrock is deliberately optional. When enabled, it provides qualitative commentary such as concentration, momentum, and areas to watch. It does not own business calculations or chart values.
 
-## Security and operations
+Amazon Bedrock API keys are bearer tokens. Keep the key in `.env` on the server and never place it in browser JavaScript, README files, screenshots, commits, or chat messages.
 
-`MONDAY_API_TOKEN` is read only by the backend and is never returned, logged, or bundled to the UI. `.env` is ignored. The adapter makes no mutation calls. Error responses are user-safe and stack traces are not exposed. Requests get a correlation ID and structured logs exclude secrets.
+```env
+AWS_BEDROCK_ENABLED=true
+AWS_BEARER_TOKEN_BEDROCK=your_bedrock_api_key
+AWS_BEDROCK_REGION=us-east-1
+AWS_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
+AWS_BEDROCK_TIMEOUT_MS=20000
+```
 
-## Testing and limitations
+The Bedrock path is fail-soft:
 
-`npm test` executes normalization and deterministic metric tests. See `TEST_REPORT.md`. Live integration, pagination, retry behavior, deployment, and clean-browser validation are deliberately unmarked until real credentials and boards are available.
+- Disabled or missing key: deterministic report still works.
+- Timeout or service error: deterministic report still works.
+- Numeric claims in model commentary: commentary is discarded.
+- API key: never returned to the browser or logged.
+
+For long-running production use, prefer short-lived keys or an AWS identity-based deployment role over a long-lived exploration key.
+
+## API Endpoints
+
+### Health
+
+```http
+GET /api/health
+```
+
+Returns a simple service status and request ID.
+
+### Schema inspection
+
+```http
+GET /api/schema
+```
+
+Returns the live Deals and Work Orders board names, record counts, discovered fields, retrieval timestamps, and cache state.
+
+### Business query
+
+```http
+POST /api/query
+Content-Type: application/json
+
+{"question":"How is our pipeline looking?"}
+```
+
+The response contains:
+
+- deterministic result metadata for auditability
+- `response.direct_answer`
+- `response.key_numbers`
+- `response.observations`
+- `response.risks`
+- `response.caveats`
+- `response.visualization`
+- optional `response.ai_analysis`
+- `response.source_note`
+- structured `evidence` used to support the answer
+
+The browser renders `response`, not raw analytics tool names or raw JSON evidence.
+
+## Security Rules
+
+- `.env` is ignored and must remain local.
+- monday.com and Bedrock credentials are server-only.
+- The monday adapter makes read-only calls.
+- Request logs include correlation IDs but exclude tokens and prompts containing credentials.
+- Error responses are user-safe and do not expose stack traces.
+- Rotate any credential that has been pasted into chat, committed, screenshotted, or shared outside the intended secret store.
+
+## Validation
+
+Run the full deterministic test suite:
+
+```powershell
+node --test
+```
+
+Check the backend:
+
+```powershell
+Invoke-WebRequest http://localhost:3000/api/health
+Invoke-WebRequest http://localhost:3000/api/schema
+```
+
+Test a founder query:
+
+```powershell
+$body = @{ question = "How is our pipeline looking?" } | ConvertTo-Json
+Invoke-WebRequest `
+  -Uri http://localhost:3000/api/query `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+## Design Principles
+
+- **Numbers are deterministic**: the model never calculates metrics.
+- **Answers are synthesized**: one question produces one coherent executive response.
+- **Evidence stays traceable**: source board, schema, retrieval time, status, and caveats are preserved.
+- **Visuals stay honest**: charts use analytics output directly.
+- **Missing data is explicit**: unavailable metrics are reported rather than guessed.
+- **The interface is progressive**: concise answer first, detail on demand.

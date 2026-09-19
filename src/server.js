@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { executeQuestion, inspectSources } from './query.js';
 import { MondaySourceError } from './monday.js';
 import { MondayDataAdapter } from './monday.js';
+import { config } from './config.js';
 
 const responseHeaders = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
 // The normal production path is same-origin. This header makes a locally previewed
@@ -24,12 +25,16 @@ const server = createServer(async (request, response) => {
       console.info(JSON.stringify({ request_id: id, event: 'query', query_length: String(question || '').length, metric: result.metric, status: result.status, elapsed_ms: Date.now() - started, cache: result.cache }));
       return json(response, 200, { request_id: id, result });
     }
-    if (request.method === 'GET' && request.url === '/') return response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(await readFile(new URL('../public/index.html', import.meta.url)));
+    if (request.method === 'GET' && request.url === '/') {
+      const html = await readFile(new URL('../public/index.html', import.meta.url));
+      return response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }).end(html);
+    }
     return json(response, 404, { error: 'Not found', request_id: id });
   } catch (error) {
     const known = error instanceof MondaySourceError;
     console.error(JSON.stringify({ request_id: id, event: 'error', code: error.code || 'UNEXPECTED', message: error.message }));
+    if (response.headersSent) return;
     return json(response, known ? 503 : 400, { request_id: id, result: { status: 'SOURCE_ERROR', explanation: known ? error.message : 'The request could not be processed.' } });
   }
 });
-server.listen(process.env.PORT || 3000, () => console.info(`Skylark BI Agent listening on http://localhost:${process.env.PORT || 3000}`));
+server.listen(config.port, () => console.info(`Skylark BI Agent listening on http://localhost:${config.port}`));
