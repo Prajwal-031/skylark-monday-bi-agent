@@ -1,8 +1,41 @@
 # Skylark Intelligence
 
-![Skylark Intelligence - Business Intelligence for a Higher Tomorrow](image.png)
+<div align="center">
+  <img src="image.png" alt="Skylark Intelligence dashboard hero" width="900" />
+</div>
 
 An interactive founder-facing BI assistant for live monday.com sales and work-order data.
+
+## Product Preview
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="1.png" width="420" alt="Executive dashboard overview" />
+        <br />
+        <sub>Executive overview</sub>
+      </td>
+      <td align="center">
+        <img src="2.png" width="420" alt="Pipeline analysis with answer and key metrics" />
+        <br />
+        <sub>AI answer with key metrics</sub>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="3.png" width="420" alt="Detailed report with risk and trend insights" />
+        <br />
+        <sub>Detailed report</sub>
+      </td>
+      <td align="center">
+        <img src="4.png" width="420" alt="Data insights and work-order execution view" />
+        <br />
+        <sub>Risk and execution view</sub>
+      </td>
+    </tr>
+  </table>
+</div>
 
 The app combines deterministic analytics with an optional Amazon Bedrock commentary layer. Deterministic code owns every filter, aggregation, date rule, currency value, risk count, and chart value. Bedrock can add qualitative interpretation, but it cannot invent, recalculate, or replace the numbers.
 
