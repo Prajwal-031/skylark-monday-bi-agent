@@ -4,9 +4,35 @@
   <img src="image.png" alt="Skylark Intelligence dashboard hero" width="900" />
 </div>
 
-An interactive founder-facing BI assistant for live monday.com sales and work-order data.
+<div align="center">
+  <h3>
+    <a href="#">Flutter</a>
+    <span> · </span>
+    <a href="#">Node.js</a>
+    <span> · </span>
+    <a href="#">monday.com API</a>
+    <span> · </span>
+    <a href="#">Amazon Bedrock</a>
+  </h3>
+</div>
 
-## Product Preview
+A founder-facing business intelligence assistant for live monday.com sales and work-order data.
+
+Skylark Intelligence turns raw operational data into fast executive answers. It blends deterministic calculations with optional AI-driven interpretation so leaders can ask natural-language questions and get a concise, evidence-backed answer instead of a dashboard dump.
+
+## Why this project exists
+
+Most BI tools require users to build dashboards, inspect multiple views, and manually connect the dots. Skylark Intelligence is designed for a different pattern:
+
+- ask a plain-English business question,
+- retrieve the relevant monday.com data,
+- calculate the answer deterministically,
+- surface the key numbers and risk signals,
+- present a crisp executive narrative with supporting evidence.
+
+This makes it especially useful for founders, operators, and leadership teams who need fast answers about pipeline health, deal risk, work-order execution, and business momentum.
+
+## Product preview
 
 <div align="center">
   <table>
@@ -37,11 +63,65 @@ An interactive founder-facing BI assistant for live monday.com sales and work-or
   </table>
 </div>
 
-The app combines deterministic analytics with an optional Amazon Bedrock commentary layer. Deterministic code owns every filter, aggregation, date rule, currency value, risk count, and chart value. Bedrock can add qualitative interpretation, but it cannot invent, recalculate, or replace the numbers.
+## Core capabilities
 
-## Quick Start
+- Natural-language question answering over live monday.com data
+- Deterministic pipeline, revenue, stage, and sector metrics
+- Risk detection for stalled, incomplete, or unusually large deals
+- Executive response structure: direct answer, key numbers, insights, caveats
+- Optional AI commentary layered on top of verified numbers
+- Interactive visual summary for detailed drill-down analysis
 
-Run these commands in PowerShell:
+## Design principles
+
+The product is intentionally built around a few clear principles:
+
+- **Numbers stay deterministic**: the model never calculates the figures; the code does.
+- **Answers are concise and executive-ready**: users get a direct answer first, not a data dump.
+- **Evidence remains auditable**: metrics, exclusions, caveats, and source context stay visible.
+- **Missing data is explicit**: gaps are reported instead of silently converted to zeros.
+- **Visuals remain honest**: charts reflect validated analytics output.
+- **The interface is progressive**: answer first, explanation second, detail on demand.
+
+## Architecture
+
+Skylark Intelligence follows a simple, traceable architecture:
+
+```mermaid
+flowchart LR
+    A[User question] --> B[Intent classification]
+    B --> C[Relevant analytics selection]
+    C --> D[Live monday.com retrieval]
+    D --> E[Deterministic calculations]
+    E --> F[Structured evidence]
+    F --> G[Executive response synthesis]
+    G --> H[Optional Bedrock commentary]
+    H --> I[UI: answer + report]
+```
+
+### Runtime components
+
+- `public/index.html`: browser UI for the query composer, answer card, and report visuals.
+- `src/server.js`: same-origin HTTP server and JSON API.
+- `src/query.js`: request orchestration, intent routing, evidence collection, and response synthesis.
+- `src/analytics.js`: deterministic metrics, filters, and data-quality logic.
+- `src/normalization.js`: amount, date, status, and label normalization.
+- `src/schema.js`: canonical mapping for monday.com board fields.
+- `src/monday.js`: read-only monday.com GraphQL client with pagination and timeouts.
+- `src/bedrock.js`: optional, server-side qualitative commentary layer.
+
+## Data sources
+
+The application uses monday.com as its live operational data source. It currently supports two configured boards:
+
+- **Deals**: open pipeline, pipeline by stage, pipeline by sector, won revenue, top deals, and risky deals.
+- **Work Orders**: active, completed, and delayed execution views.
+
+Schema discovery happens dynamically from the live board structure. When a field is ambiguous or invalid, it is excluded with explicit caveats rather than silently converted to a misleading value.
+
+## Quick start
+
+Run the following in PowerShell:
 
 ```powershell
 cd "C:\Users\prajw\OneDrive\Documents\Project\Business-Intelligence-Agent"
@@ -52,97 +132,23 @@ npm test
 npm start
 ```
 
-Add your monday.com token and board IDs to `.env`, then open [http://localhost:3000](http://localhost:3000). Keep the terminal running while using the dashboard. Stop the server with `Ctrl+C`.
+Then open [http://localhost:3000](http://localhost:3000).
 
-For development with automatic server restarts:
+For live development with automatic restarts:
 
 ```powershell
 npm run dev
 ```
 
-## What It Feels Like
-
-Open `http://localhost:3000` and ask a question in plain language:
-
-- `How is our pipeline looking?`
-- `Which deals are risky?`
-- `Show pipeline by sector`
-- `What are the largest deals?`
-- `Which work orders are delayed?`
-- `How are operations doing?`
-
-The interface is designed around one executive answer per question:
-
-1. **Direct answer**: a short interpretation first.
-2. **Key numbers**: the relevant totals and record counts.
-3. **What stands out**: evidence-based stage, sector, or risk observations.
-4. **Risks and caveats**: shown only when material.
-5. **Detailed report**: an expandable view with deterministic visualizations.
-
-For pipeline questions, the detailed report includes compact bar charts for the largest deal stages and sectors. The report can also include optional Bedrock commentary below the deterministic evidence.
-
-## Current Pipeline Example
-
-A live pipeline overview is synthesized from the relevant analytics only:
-
-```text
-Your current open pipeline is ₹68.82 Cr across 47 deals, led by Tender.
-56 deals need attention. You have ₹9.50 Cr in won revenue for context.
-```
-
-Internal identifiers such as `open_pipeline`, `risky_deals`, and `pipeline_by_sector` stay in the backend evidence and are not shown as the user-facing answer.
-
-## Architecture
-
-```text
-User question
-  -> intent classification
-  -> relevant analytics selection
-  -> live monday.com retrieval
-  -> deterministic calculations
-  -> structured evidence
-  -> optional Bedrock qualitative commentary
-  -> one executive response + optional visual report
-```
-
-Runtime components:
-
-- `public/index.html`: browser UI, question composer, response hierarchy, and report visualizations.
-- `src/server.js`: same-origin HTTP server and JSON API.
-- `src/query.js`: intent routing, analytics orchestration, response synthesis, and evidence collection.
-- `src/analytics.js`: deterministic metrics and data-quality rules.
-- `src/normalization.js`: amount, date, status, and label normalization.
-- `src/schema.js`: mapping from live monday.com column titles to canonical fields.
-- `src/monday.js`: read-only monday.com GraphQL adapter with cursor pagination and timeouts.
-- `src/bedrock.js`: optional server-only Bedrock commentary request.
-
-## Data Sources
-
-monday.com is the only runtime business-data source. The application currently supports two configured boards:
-
-- **Deals**: open pipeline, pipeline by stage, pipeline by sector, won revenue, top deals, and risky deals.
-- **Work Orders**: active, completed, and delayed work-order views.
-
-The schema is discovered from the live board columns. A field is used only when its mapping is unambiguous. Missing or invalid values remain visible as exclusions and caveats; they are never silently converted to zero.
-
-## Setup
+## Environment setup
 
 Requirements:
 
 - Node.js 18 or later
 - npm
 - A monday.com read-capable API token
-- IDs for the Deals and Work Orders boards
-- Optional Bedrock bearer API key and model access
-
-Install and configure:
-
-```powershell
-cd "C:\Users\prajw\OneDrive\Documents\Project\Business-Intelligence-Agent"
-npm install
-Copy-Item .env.example .env
-notepad .env
-```
+- Deal and Work Order board IDs
+- Optional Bedrock access for commentary enhancement
 
 Minimum `.env` configuration:
 
@@ -155,20 +161,9 @@ PORT=3000
 CACHE_TTL_MS=30000
 ```
 
-Start the application:
+## Optional Bedrock enhancement
 
-```powershell
-npm test
-npm start
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-## Optional Bedrock Enhancement
-
-Bedrock is deliberately optional. When enabled, it provides qualitative commentary such as concentration, momentum, and areas to watch. It does not own business calculations or chart values.
-
-Amazon Bedrock API keys are bearer tokens. Keep the key in `.env` on the server and never place it in browser JavaScript, README files, screenshots, commits, or chat messages.
+Bedrock is deliberately optional. When enabled, it adds qualitative commentary such as concentration, momentum, and areas to watch. It does not own or replace the business calculations.
 
 ```env
 AWS_BEDROCK_ENABLED=true
@@ -178,16 +173,36 @@ AWS_BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-6
 AWS_BEDROCK_TIMEOUT_MS=20000
 ```
 
-The Bedrock path is fail-soft:
+Operating rules:
 
-- Disabled or missing key: deterministic report still works.
-- Timeout or service error: deterministic report still works.
-- Numeric claims in model commentary: commentary is discarded.
-- API key: never returned to the browser or logged.
+- Missing or disabled key: deterministic output still works
+- Timeout or service error: deterministic output still works
+- Numeric claims in commentary: discarded unless verified
+- API key: never returned to the browser or logged
 
-For long-running production use, prefer short-lived keys or an AWS identity-based deployment role over a long-lived exploration key.
+## Example questions
 
-## API Endpoints
+Open the app and ask questions such as:
+
+- `How is our pipeline looking?`
+- `Which deals are risky?`
+- `Show pipeline by sector`
+- `What are the largest deals?`
+- `Which work orders are delayed?`
+- `How are operations doing?`
+
+## Current pipeline example
+
+A live pipeline overview is synthesized from the relevant analytics only:
+
+```text
+Your current open pipeline is ₹68.82 Cr across 47 deals, led by Tender.
+56 deals need attention. You have ₹9.50 Cr in won revenue for context.
+```
+
+Internal identifiers such as `open_pipeline`, `risky_deals`, and `pipeline_by_sector` remain in the backend evidence and are not shown in the final user-facing answer.
+
+## API endpoints
 
 ### Health
 
@@ -195,7 +210,7 @@ For long-running production use, prefer short-lived keys or an AWS identity-base
 GET /api/health
 ```
 
-Returns a simple service status and request ID.
+Returns a simple service status and request identifier.
 
 ### Schema inspection
 
@@ -203,7 +218,7 @@ Returns a simple service status and request ID.
 GET /api/schema
 ```
 
-Returns the live Deals and Work Orders board names, record counts, discovered fields, retrieval timestamps, and cache state.
+Returns board names, record counts, discovered fields, retrieval timestamps, and cache state.
 
 ### Business query
 
@@ -214,9 +229,8 @@ Content-Type: application/json
 {"question":"How is our pipeline looking?"}
 ```
 
-The response contains:
+The response may include:
 
-- deterministic result metadata for auditability
 - `response.direct_answer`
 - `response.key_numbers`
 - `response.observations`
@@ -225,28 +239,26 @@ The response contains:
 - `response.visualization`
 - optional `response.ai_analysis`
 - `response.source_note`
-- structured `evidence` used to support the answer
+- structured evidence used to support the answer
 
-The browser renders `response`, not raw analytics tool names or raw JSON evidence.
+## Security and governance
 
-## Security Rules
-
-- `.env` is ignored and must remain local.
-- monday.com and Bedrock credentials are server-only.
-- The monday adapter makes read-only calls.
-- Request logs include correlation IDs but exclude tokens and prompts containing credentials.
-- Error responses are user-safe and do not expose stack traces.
-- Rotate any credential that has been pasted into chat, committed, screenshotted, or shared outside the intended secret store.
+- `.env` stays local and is not committed.
+- monday.com and Bedrock credentials remain server-side only.
+- The monday adapter is read-only.
+- Correlation IDs are logged for traceability, but tokens and secret-bearing prompts are excluded.
+- Error responses are sanitized and do not expose stack traces.
+- Any credential leaked into chat, screenshots, or commits should be rotated immediately.
 
 ## Validation
 
-Run the full deterministic test suite:
+Run the deterministic test suite:
 
 ```powershell
 node --test
 ```
 
-Check the backend:
+Check the backend health and schema:
 
 ```powershell
 Invoke-WebRequest http://localhost:3000/api/health
@@ -264,11 +276,7 @@ Invoke-WebRequest `
   -Body $body
 ```
 
-## Design Principles
+## Summary
 
-- **Numbers are deterministic**: the model never calculates metrics.
-- **Answers are synthesized**: one question produces one coherent executive response.
-- **Evidence stays traceable**: source board, schema, retrieval time, status, and caveats are preserved.
-- **Visuals stay honest**: charts use analytics output directly.
-- **Missing data is explicit**: unavailable metrics are reported rather than guessed.
-- **The interface is progressive**: concise answer first, detail on demand.
+Skylark Intelligence is designed for fast decision support in revenue operations, pipeline management, and execution oversight. It emphasizes trust, traceability, and speed—so business leaders can ask better questions and get reliable answers with evidence behind them.
+
